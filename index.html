@@ -325,6 +325,36 @@
   }
   .loading-dot:nth-child(2){ animation-delay: .15s; }
   .loading-dot:nth-child(3){ animation-delay: .30s; }
+  /* ── affirmation components ── */
+  .affirmation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--blush);
+    color: var(--rose);
+    font-size: clamp(.7rem, 2.8vw, .76rem);
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 50px;
+    border: 1px solid var(--petal);
+  }
+
+  .affirmation-box {
+    background: linear-gradient(135deg, var(--blush) 0%, #f3e4fc 100%);
+    border-radius: 18px;
+    padding: clamp(14px,4vw,18px) clamp(16px,5vw,22px);
+    width: 100%;
+    border-left: 3px solid var(--rose);
+  }
+  .affirmation-box p {
+    color: var(--ink);
+    font-size: clamp(.88rem, 3.5vw, .95rem);
+    max-width: none;
+    line-height: 1.7;
+  }
+
   /* ── music player ── */
   .music-player {
     display: flex;
@@ -433,37 +463,42 @@
       <div class="pulse-ring"></div>
       <div class="envelope-icon">🎁</div>
     </div>
-    <h2 style="font-family:'Playfair Display',serif">Ada hadiah<br><em>untukmu</em></h2>
+    <h2 style="font-family:'Playfair Display',serif">Ada sesuatu<br><em>untukmu</em></h2>
+    <p style="font-size:.82rem;color:var(--muted);max-width:200px">dari seseorang yang peduli sama kamu 💜</p>
     <span class="hint">ketuk untuk membuka</span>
   </div>
 
   <!-- PAGE 2 -->
   <div class="page" id="page2">
-    <p style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--petal)">Hei kamu 🥳</p>
-    <div class="divider"></div>
-    <h2>Hari ini<br>hari yang<br>paling <em>spesial</em></h2>
-    <p>Karena kamu lahir ke dunia ini. Dan itu hal terbaik yang pernah terjadi.</p>
+    <div class="affirmation-badge">🌟 Hari Istimewa</div>
+    <h2>Kamu adalah<br>seseorang yang<br><em>luar biasa</em></h2>
+    <div class="affirmation-box">
+      <p>Kehadiranmu membuat dunia ini jadi tempat yang lebih hangat dan lebih indah. Beneran.</p>
+    </div>
     <button class="btn-primary" id="btn2">Lanjut →</button>
   </div>
 
   <!-- PAGE 3 -->
   <div class="page" id="page3">
-    <h2>Semoga hari ini...</h2>
+    <div class="affirmation-badge">💜 Untuk Diingat</div>
+    <h2>Kamu <em>layak</em><br>untuk semua<br>hal baik</h2>
     <div class="confession">
-      <p>Kamu <strong>bahagia banget</strong> ya 🎉<br>
-      <span style="font-size:.85rem;color:var(--muted)">Kamu layak dapat semua yang terbaik.</span></p>
+      <p>Kebahagiaanmu, mimpi-mimpimu,<br>dan cintamu — semuanya <strong>valid</strong> 🌸<br>
+      <span style="font-size:.85rem;color:var(--muted)">Jangan pernah meragukan dirimu sendiri.</span></p>
     </div>
-    <div class="divider"></div>
     <button class="btn-primary" id="btn3">Lanjut →</button>
   </div>
 
   <!-- PAGE 4 -->
   <div class="page" id="page4">
-    <h2>Seneng gak<br><em>ultah tahun ini?</em></h2>
-    <p>Jawab jujur ya, jangan malu 🥺</p>
+    <h2>Sudah jauh<br><em>kamu berjalan</em></h2>
+    <div class="affirmation-box">
+      <p>Setiap tantangan yang kamu lewatin, setiap hari yang berat — itu bukti betapa kuatnya kamu. 🌈</p>
+    </div>
+    <p style="font-size:.82rem">Proud of you. Beneran.</p>
     <div class="choice-row" id="choiceRow">
-      <button id="yesBtn">🎉 Seneng!</button>
-      <button id="noBtn">Biasa aja...</button>
+      <button id="yesBtn">🥹 Makasih!</button>
+      <button id="noBtn">Ah biasa aja</button>
     </div>
   </div>
 
@@ -472,7 +507,9 @@
     <div class="big-heart">🎂</div>
     <h2><em>Happy Birthday!</em></h2>
     <div class="divider"></div>
-    <p>Selamat ulang tahun, ya! 🥳<br>Semoga semua impianmu terwujud tahun ini 🌟</p>
+    <div class="affirmation-box" style="margin:0">
+      <p style="font-size:.9rem">Di hari yang spesial ini, ingat selalu:<br><strong>kamu dicintai, kamu berarti,</strong><br>dan dunia lebih baik dengan adanya kamu 🌟</p>
+    </div>
     <div class="music-player" id="musicPlayer">
       <div class="music-info">
         <div class="music-vinyl" id="vinyl">🎵</div>
