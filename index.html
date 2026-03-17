@@ -420,6 +420,83 @@
   }
   .music-toggle:active { transform: scale(.92); }
 
+  /* ── birthday date input ── */
+  .date-input-wrap {
+    position: relative;
+    width: 220px;
+  }
+  .bday-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--petal);
+    border-radius: 50px;
+    background: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    color: var(--ink);
+    text-align: center;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .bday-input:focus {
+    border-color: var(--rose);
+    box-shadow: 0 0 0 3px rgba(185,79,207,.15);
+  }
+  .bday-btn {
+    padding: 12px 32px;
+    background: var(--rose);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .92rem;
+    font-weight: 500;
+    cursor: pointer;
+    min-height: 48px;
+    box-shadow: 0 4px 18px rgba(160,50,210,.35);
+    transition: transform .18s, box-shadow .18s, background .18s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    width: 220px;
+  }
+  .bday-btn:hover  { background: #a03dbe; transform: translateY(-2px); }
+  .bday-btn:active { transform: scale(.97); }
+  #stepInput {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .ring-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: -10px;
+  }
+  .lock-msg {
+    font-size: clamp(.82rem, 3.2vw, .88rem);
+    color: var(--muted);
+    font-style: italic;
+    padding: 10px 18px;
+    background: var(--blush);
+    border-radius: 12px;
+    max-width: 220px;
+    line-height: 1.5;
+  }
+  .bday-btn-ghost {
+    background: transparent !important;
+    color: var(--muted) !important;
+    border: 1.5px solid var(--petal) !important;
+    box-shadow: none !important;
+    font-size: .82rem !important;
+    min-height: 40px !important;
+    padding: 8px 24px !important;
+  }
+  .bday-btn-ghost:hover { background: var(--blush) !important; transform: none !important; }
+
   @keyframes bounceDot {
     0%,100%{ transform: translateY(0);    background: var(--petal); }
     50%    { transform: translateY(-9px); background: var(--rose);  }
@@ -427,17 +504,25 @@
 </style>
 <body>
 
-<!-- loading -->
+<!-- loading / birthday countdown -->
 <div id="loadingOverlay">
   <div class="loading-icon">🎂</div>
-  <div class="loading-label">menyiapkan kejutan untukmu...</div>
-  <div class="ring-wrap">
-    <svg class="ring-svg" viewBox="0 0 84 84">
-      <circle class="ring-track" cx="42" cy="42" r="37"/>
-      <circle class="ring-fill"  id="ringFill" cx="42" cy="42" r="37"/>
-    </svg>
-    <div class="ring-num" id="ringNum">3</div>
+
+  <!-- countdown result (langsung tampil) -->
+  <div id="stepResult" style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center">
+    <div class="loading-label" id="resultLabel">Menghitung...</div>
+    <div class="ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 84 84">
+        <circle class="ring-track" cx="42" cy="42" r="37"/>
+        <circle class="ring-fill" id="ringFill" cx="42" cy="42" r="37"/>
+      </svg>
+      <div class="ring-num" id="ringNum">—</div>
+    </div>
+    <div class="ring-label" id="ringLabel">hari lagi</div>
+    <div class="lock-msg" id="lockMsg">Sabar ya, hadiahnya lagi nunggu kamu 💜</div>
+    <button class="bday-btn" id="openBtn" style="display:none">Buka hadiahnya 🎉</button>
   </div>
+
   <div class="loading-dots-row">
     <div class="loading-dot"></div>
     <div class="loading-dot"></div>
@@ -528,26 +613,76 @@
 </audio>
 
 <script>
-  /* ── countdown ── */
-  const overlay  = document.getElementById('loadingOverlay');
-  const ringFill = document.getElementById('ringFill');
-  const ringNum  = document.getElementById('ringNum');
-  const CIRCUM   = 232;
-  let countdown  = 3;
-
-  function tickCountdown() {
-    const filled = ((3 - countdown + 1) / 3) * CIRCUM;
-    ringFill.style.strokeDashoffset = CIRCUM - filled;
-    ringNum.textContent = countdown;
-    if (countdown <= 0) { overlay.classList.add('hide'); return; }
-    countdown--;
-    setTimeout(tickCountdown, 1000);
+  /* ── tap / click helpers (no 300ms delay) ── */
+  function onTap(el, fn) {
+    let moved = false;
+    el.addEventListener('touchstart', () => { moved = false; }, { passive: true });
+    el.addEventListener('touchmove',  () => { moved = true;  }, { passive: true });
+    el.addEventListener('touchend',   e  => { if (!moved) { e.preventDefault(); fn(); } });
+    el.addEventListener('click', fn);
   }
-  setTimeout(tickCountdown, 300);
+
+  /* ── birthday countdown (hardcoded: 18 Maret 2026) ── */
+  const BDAY_DATE   = '2026-03-18';
+  const overlay     = document.getElementById('loadingOverlay');
+  const ringFill    = document.getElementById('ringFill');
+  const ringNum     = document.getElementById('ringNum');
+  const ringLabel   = document.getElementById('ringLabel');
+  const resultLabel = document.getElementById('resultLabel');
+  const lockMsg     = document.getElementById('lockMsg');
+  const openBtn     = document.getElementById('openBtn');
+  const CIRCUM      = 232;
+
+  function getDays() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const bday  = new Date(BDAY_DATE);
+    const next  = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
+    if (next < today) next.setFullYear(today.getFullYear() + 1);
+    return Math.round((next - today) / 86400000);
+  }
+
+  function renderCountdown() {
+    const days = getDays();
+
+    if (days === 0) {
+      ringNum.textContent     = '🎂';
+      ringLabel.textContent   = 'Hari ini ultahnya!';
+      resultLabel.textContent = 'Selamat ulang tahun! 🥳';
+      lockMsg.style.display   = 'none';
+      openBtn.style.display   = 'block';
+      ringFill.style.strokeDashoffset = 0;
+      setTimeout(() => {
+        confetti({ particleCount: 80, spread: 60, origin: { y: .3 }, colors: ['#b94fcf','#e0b0f0','#fff','#f9e04b'] });
+      }, 400);
+    } else {
+      ringNum.textContent     = days;
+      ringLabel.textContent   = days === 1 ? 'hari lagi ✨' : 'hari lagi';
+      resultLabel.textContent = days <= 7 ? `Bentar lagi banget! 🎉`
+                              : days <= 30 ? `Hampir tiba! ✨`
+                              : `Menuju hari spesialmu 💜`;
+      lockMsg.textContent     = days <= 7
+        ? `Hampir! Tinggal ${days} hari lagi. Sabar ya 🥺`
+        : `Hadiahnya lagi nungguin kamu. Buka pas hari H ya 💜`;
+      lockMsg.style.display   = 'block';
+      openBtn.style.display   = 'none';
+      const pct = Math.max(0, 1 - (days / 365));
+      setTimeout(() => { ringFill.style.strokeDashoffset = CIRCUM - (pct * CIRCUM); }, 150);
+    }
+  }
+
+  // jalankan saat load
+  renderCountdown();
+
+  // cek tiap menit — auto-unlock pas hari H tiba
+  setInterval(() => {
+    if (getDays() === 0 && openBtn.style.display === 'none') renderCountdown();
+  }, 60000);
+
+  onTap(openBtn, () => { overlay.classList.add('hide'); });
 
   /* ── petals ── */
   const bg = document.getElementById('petalsBg');
-  ['🌸','⭐','✨','🌟','💜','🎀'].forEach((s, i) => {
+  ['🌸','⭐','✨','🌟','💜','🎀'].forEach((s) => {
     for (let j = 0; j < 4; j++) {
       const el = document.createElement('span');
       el.className = 'petal';
@@ -567,18 +702,7 @@
     document.getElementById('d'+current).classList.add('active');
   }
 
-  /* ── tap / click helpers (no 300ms delay) ── */
-  function onTap(el, fn) {
-    let moved = false;
-    el.addEventListener('touchstart', () => { moved = false; }, { passive: true });
-    el.addEventListener('touchmove',  () => { moved = true;  }, { passive: true });
-    el.addEventListener('touchend',   e  => { if (!moved) { e.preventDefault(); fn(); } });
-    el.addEventListener('click', fn);
-  }
-
-  function startApp() {
-    showPage(2);
-  }
+  function startApp() { showPage(2); }
 
   onTap(document.getElementById('envelopeBtn'), startApp);
   onTap(document.getElementById('btn2'), () => showPage(3));
@@ -594,9 +718,8 @@
     const rw  = row.offsetWidth;
     const bw  = noBtn.offsetWidth;
     const max = Math.max(30, rw / 2 - bw - 8);
-    // on mobile escape vertically more; horizontally less (card is narrow)
-    const x = (Math.random() > .5 ? 1 : -1) * (20 + Math.random() * max * .7);
-    const y = (Math.random() > .5 ? 1 : -1) * (28 + Math.random() * 36);
+    const x   = (Math.random() > .5 ? 1 : -1) * (20 + Math.random() * max * .7);
+    const y   = (Math.random() > .5 ? 1 : -1) * (28 + Math.random() * 36);
     noBtn.style.transform = `translate(${x}px,${y}px)`;
     yesScale = Math.min(yesScale + 0.18, 1.85);
     yesBtn.style.transform = `scale(${yesScale})`;
@@ -611,8 +734,8 @@
     showPage(5);
     document.getElementById('music').play().catch(() => {});
     confetti({ particleCount: 160, spread: 75, origin: { y: .6 }, colors: ['#b94fcf','#e0b0f0','#fff','#d4a04a','#f9e04b'] });
-    setTimeout(() => confetti({ particleCount: 70, angle: 60,  spread: 50, origin: { x: 0,   y: .7 } }), 350);
-    setTimeout(() => confetti({ particleCount: 70, angle: 120, spread: 50, origin: { x: 1,   y: .7 } }), 600);
+    setTimeout(() => confetti({ particleCount: 70, angle: 60,  spread: 50, origin: { x: 0, y: .7 } }), 350);
+    setTimeout(() => confetti({ particleCount: 70, angle: 120, spread: 50, origin: { x: 1, y: .7 } }), 600);
   }
 
   onTap(yesBtn, yesClick);
